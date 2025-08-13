@@ -1,69 +1,96 @@
-# This is a basic workflow to help you get started with Actions
+# GitHub Actions CI/CD Workflow
+# This workflow demonstrates a multi-environment CI pipeline with different security levels
+# It showcases environment-specific secrets, artifact management, and manual workflow triggers
 
 name: CI
 
-# Controls when the workflow will run
+# Workflow Triggers
+# The workflow will run automatically on:
+# - Push events to the main branch
+# - Pull request events targeting the main branch
+# - Manual workflow dispatch from the Actions tab
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Manual trigger - allows running the workflow on-demand
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# Job Definitions
+# This workflow contains three jobs that can run in parallel:
+# 1. env_level: Development environment with restricted secrets
+# 2. repo_level: Repository-level secrets (no environment restrictions)
+# 3. prod_level: Production environment with strict access controls
 jobs:
-  # This workflow contains a single job called "build"
+  # Development Environment Job
+  # This job runs in the 'dev' environment, which may have different secret policies
   env_level:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    environment: dev
+    environment: dev  # Restricts access to environment-specific secrets
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checkout the repository code
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
+      # Create a file with environment-specific secret
+      # Note: USER secret must be configured in the 'dev' environment
       - name: Run a one-line script
         run: echo "Using:${{ secrets.USER }}" >> secret.txt
         
+      # Upload the generated file as an artifact
+      # This makes the file available for download after the workflow completes
       - uses: actions/upload-artifact@v4
         with:
           name: dev
           path: secret.txt
-      # Runs a set of commands using the runners shell
+
+      # Example of a multi-line script execution
+      # This demonstrates how to run multiple commands in a single step
       - name: Run a multi-line script
         run: |
           echo Add other actions to build,
           echo test, and deploy your project.
           
+  # Repository-Level Job
+  # This job uses repository-level secrets (no environment restrictions)
+  # Useful for operations that don't require environment-specific configuration
   repo_level:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository code
       - uses: actions/checkout@v4
 
+      # Create a file with repository-level secret
+      # Note: USER secret must be configured at the repository level
       - name: Run a one-line script
         run: echo "Using:${{ secrets.USER }}" >> secret.txt
         
+      # Upload the generated file as an artifact
       - uses: actions/upload-artifact@v4
         with:
           name: repo
           path: secret.txt
 
+  # Production Environment Job
+  # This job runs in the 'prod' environment with strict access controls
+  # Typically requires manual approval and has the most restricted secret access
   prod_level:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: prod  # Most restrictive environment with approval gates
     
     steps:
+      # Checkout the repository code
       - uses: actions/checkout@v4
 
+      # Create a file with production environment secret
+      # Note: USER secret must be configured in the 'prod' environment
       - name: Run a one-line script
         run: echo "Using:${{ secrets.USER }}" >> secret.txt
         
+      # Upload the generated file as an artifact
       - uses: actions/upload-artifact@v4
         with:
           name: prod
